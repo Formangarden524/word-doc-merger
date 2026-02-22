@@ -52,15 +52,13 @@ check_dependencies() {
         echo -e "${YELLOW}⚠️  正在安装依赖 python-docx...${NC}"
         
         # 尝试用户级安装
-        pip3 install --user python-docx 2>/dev/null
-        if [ $? -eq 0 ]; then
+        if pip3 install --user python-docx 2>/dev/null; then
             echo -e "${GREEN}✅ 依赖安装完成${NC}"
             return 0
         fi
         
         # 尝试带 --break-system-packages 的用户级安装
-        pip3 install --user --break-system-packages python-docx 2>/dev/null
-        if [ $? -eq 0 ]; then
+        if pip3 install --user --break-system-packages python-docx 2>/dev/null; then
             echo -e "${GREEN}✅ 依赖安装完成${NC}"
             return 0
         fi
