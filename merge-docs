@@ -51,25 +51,19 @@ check_dependencies() {
     if ! python3 -c "import docx" 2>/dev/null; then
         echo -e "${YELLOW}⚠️  正在安装依赖 python-docx...${NC}"
         
-        # 尝试用户级安装（避免系统保护错误）
+        # 尝试用户级安装
         if pip3 install --user python-docx 2>/dev/null; then
-            echo -e "${GREEN}✅ 依赖安装完成（用户级）${NC}"
+            echo -e "${GREEN}✅ 依赖安装完成${NC}"
+        # 尝试带 --break-system-packages 的用户级安装
+        elif pip3 install --user --break-system-packages python-docx 2>/dev/null; then
+            echo -e "${GREEN}✅ 依赖安装完成${NC}"
         else
-            echo -e "${YELLOW}⚠️  用户级安装失败，尝试其他方法...${NC}"
-            
-            # 尝试用 --break-system-packages（最后的手段）
-            if pip3 install --user --break-system-packages python-docx 2>/dev/null; then
-                echo -e "${GREEN}✅ 依赖安装完成${NC}"
-            else
-                echo -e "${RED}❌ 自动安装失败${NC}"
-                echo ""
-                echo -e "${YELLOW}请手动安装依赖:${NC}"
-                echo "  方法1: pip3 install --user python-docx"
-                echo "  方法2: python3 -m pip install --user python-docx"
-                echo "  方法3: brew install python-docx (如果可用)"
-                echo ""
-                exit 1
-            fi
+            echo -e "${RED}❌ 自动安装失败${NC}"
+            echo ""
+            echo -e "${YELLOW}请手动安装依赖:${NC}"
+            echo "  pip3 install --user --break-system-packages python-docx"
+            echo ""
+            exit 1
         fi
     fi
 }
