@@ -48,18 +48,26 @@ check_python() {
 
 # 检查 python-docx 依赖
 check_dependencies() {
-    if ! python3 -c "import docx" 2>/dev/null; then
+    # 临时禁用 set -e，防止 pip 失败时退出
+    set +e
+    
+    python3 -c "import docx" 2>/dev/null
+    if [ $? -ne 0 ]; then
         echo -e "${YELLOW}⚠️  正在安装依赖 python-docx...${NC}"
         
         # 尝试用户级安装
-        if pip3 install --user python-docx 2>/dev/null; then
+        pip3 install --user python-docx 2>/dev/null
+        if [ $? -eq 0 ]; then
             echo -e "${GREEN}✅ 依赖安装完成${NC}"
+            set -e
             return 0
         fi
         
         # 尝试带 --break-system-packages 的用户级安装
-        if pip3 install --user --break-system-packages python-docx 2>/dev/null; then
+        pip3 install --user --break-system-packages python-docx 2>/dev/null
+        if [ $? -eq 0 ]; then
             echo -e "${GREEN}✅ 依赖安装完成${NC}"
+            set -e
             return 0
         fi
         
@@ -69,8 +77,12 @@ check_dependencies() {
         echo -e "${YELLOW}请手动安装依赖:${NC}"
         echo "  pip3 install --user --break-system-packages python-docx"
         echo ""
+        set -e
         exit 1
     fi
+    
+    # 恢复 set -e
+    set -e
 }
 
 # 主函数
