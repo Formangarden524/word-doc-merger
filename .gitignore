@@ -24,3 +24,7 @@ Thumbs.db
 # Output files
 *_output.docx
 *_merged.docx
+merged.docx
+
+# OpenClaw internal
+SKILL.md

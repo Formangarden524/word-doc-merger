@@ -1,0 +1,122 @@
+#!/bin/bash
+#
+# merge-docs - macOS 终端 Word 文档合并工具
+# 使用: merge-docs <文件夹路径> [输出文件路径]
+#
+
+set -e
+
+# 颜色定义
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# 获取脚本所在目录
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PYTHON_SCRIPT="$SCRIPT_DIR/merge_docs_with_content.py"
+
+# 显示帮助
+show_help() {
+    cat << EOF
+${GREEN}Word 文档合并工具${NC}
+
+用法:
+    merge-docs <输入文件夹> [输出文件]
+
+参数:
+    输入文件夹    包含 .docx 文件的文件夹路径
+    输出文件      可选，默认为 merged.docx
+
+示例:
+    merge-docs ./my_documents
+    merge-docs ./my_documents ./output.docx
+    merge-docs /Users/xxx/Downloads/docs ~/Desktop/merged.docx
+
+EOF
+}
+
+# 检查 Python3
+check_python() {
+    if ! command -v python3 &> /dev/null; then
+        echo -e "${RED}❌ 错误: 未找到 Python3${NC}"
+        echo "请先安装 Python3: https://www.python.org/downloads/"
+        exit 1
+    fi
+}
+
+# 检查 python-docx 依赖
+check_dependencies() {
+    if ! python3 -c "import docx" 2>/dev/null; then
+        echo -e "${YELLOW}⚠️  正在安装依赖 python-docx...${NC}"
+        pip3 install python-docx
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}❌ 依赖安装失败，请手动运行: pip3 install python-docx${NC}"
+            exit 1
+        fi
+        echo -e "${GREEN}✅ 依赖安装完成${NC}"
+    fi
+}
+
+# 主函数
+main() {
+    # 检查参数
+    if [ $# -eq 0 ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+        show_help
+        exit 0
+    fi
+
+    INPUT_FOLDER="$1"
+    OUTPUT_FILE="${2:-merged.docx}"
+
+    # 检查输入文件夹是否存在
+    if [ ! -d "$INPUT_FOLDER" ]; then
+        echo -e "${RED}❌ 错误: 文件夹不存在: $INPUT_FOLDER${NC}"
+        exit 1
+    fi
+
+    # 转换为绝对路径
+    INPUT_FOLDER="$(cd "$INPUT_FOLDER" && pwd)"
+    
+    # 如果输出是相对路径，转为绝对路径
+    if [[ ! "$OUTPUT_FILE" = /* ]]; then
+        OUTPUT_FILE="$PWD/$OUTPUT_FILE"
+    fi
+
+    # 检查依赖
+    check_python
+    check_dependencies
+
+    # 检查 Python 脚本是否存在
+    if [ ! -f "$PYTHON_SCRIPT" ]; then
+        echo -e "${RED}❌ 错误: 找不到合并脚本: $PYTHON_SCRIPT${NC}"
+        exit 1
+    fi
+
+    echo -e "${BLUE}🚀 开始合并文档...${NC}"
+    echo -e "${BLUE}📁 输入文件夹: $INPUT_FOLDER${NC}"
+    echo -e "${BLUE}📄 输出文件: $OUTPUT_FILE${NC}"
+    echo ""
+
+    # 执行合并
+    python3 "$PYTHON_SCRIPT" "$INPUT_FOLDER" "$OUTPUT_FILE"
+
+    # 检查结果
+    if [ $? -eq 0 ] && [ -f "$OUTPUT_FILE" ]; then
+        echo ""
+        echo -e "${GREEN}✅ 合并完成！${NC}"
+        echo -e "${GREEN}📄 输出文件: $OUTPUT_FILE${NC}"
+        
+        # 尝试打开文件所在文件夹
+        if command -v open &> /dev/null; then
+            echo -e "${BLUE}📂 正在打开输出文件夹...${NC}"
+            open "$(dirname "$OUTPUT_FILE")"
+        fi
+    else
+        echo -e "${RED}❌ 合并失败${NC}"
+        exit 1
+    fi
+}
+
+main "$@"
